@@ -1,0 +1,112 @@
+name: Desktop builds
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+    branches: ['arena/3b82d6f0-todo']
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            command: package:win
+            artifact: Linea-Windows
+          - os: macos-latest
+            command: package:mac
+            artifact: Linea-macOS
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Package desktop app
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run ${{ matrix.command }} 2>&1 | tee build.log || {
+            echo "::error::$(tail -18 build.log | tr '\n' ' ' | sed 's/::/--/g')"
+            exit 1
+          }
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Verify macOS signatures and write checksums
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            codesign --verify --deep --strict --verbose=2 "release/mac/Linea Tasks.app"
+            codesign --verify --deep --strict --verbose=2 "release/mac-arm64/Linea Tasks.app"
+            (cd release && shasum -a 256 *.dmg > SHA256SUMS.txt)
+          else
+            (cd release && sha256sum *.exe > SHA256SUMS.txt)
+          fi
+      # Actions always wraps artifacts in ZIP. These are only used to transfer files
+      # between jobs; users download individual native installers from the Release.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+  release:
+    name: Publish individual installers
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/arena/3b82d6f0-todo'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Linea-macOS
+          path: downloads/mac
+      - uses: actions/download-artifact@v4
+        with:
+          name: Linea-Windows
+          path: downloads/win
+      - name: Verify downloads and publish three direct assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          (cd downloads/mac && sha256sum -c SHA256SUMS.txt)
+          (cd downloads/win && sha256sum -c SHA256SUMS.txt)
+          version=$(node -p "require('./package.json').version")
+          test -f "downloads/mac/Linea-Tasks-${version}-mac-arm64.dmg"
+          test -f "downloads/mac/Linea-Tasks-${version}-mac-x64.dmg"
+          test -f "downloads/win/Linea-Tasks-${version}-win-x64-setup.exe"
+          cat > release-notes.md <<NOTES
+          ## 下载 / Download
+
+          只下载与你的设备对应的 **一个文件**，不需要下载 Actions 页面中的 ZIP：
+
+          | 设备 | 点击下载 |
+          | --- | --- |
+          | macOS Apple Silicon（M 系列芯片） | \`Linea-Tasks-${version}-mac-arm64.dmg\` |
+          | macOS Intel | \`Linea-Tasks-${version}-mac-x64.dmg\` |
+          | Windows x64 | \`Linea-Tasks-${version}-win-x64-setup.exe\` |
+
+          macOS 打开 DMG 后将 Linea Tasks.app 拖入“应用程序”。本项目使用 ad-hoc 签名，但尚未获得 Apple 公证；如遇“文件已损坏”，请先核对下方摘要，再参考仓库的 [FAQ](https://github.com/${{ github.repository }}/blob/arena/3b82d6f0-todo/docs/FAQ.md)。
+
+          ### SHA-256（核对所下载的文件）
+          \`\`\`text
+          $(cat downloads/mac/SHA256SUMS.txt)
+          $(cat downloads/win/SHA256SUMS.txt)
+          \`\`\`
+          NOTES
+          if gh release view "v${version}" >/dev/null 2>&1; then
+            gh release upload "v${version}" downloads/mac/*.dmg downloads/win/*.exe --clobber
+            gh release edit "v${version}" --notes-file release-notes.md
+          else
+            gh release create "v${version}" downloads/mac/*.dmg downloads/win/*.exe \
+              --target "$GITHUB_SHA" --title "Linea Tasks ${version}" --notes-file release-notes.md
+          fi
