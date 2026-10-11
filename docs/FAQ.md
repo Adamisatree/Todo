@@ -1,24 +1,22 @@
 # Linea Tasks · 常见问题与故障排查
 
-> 适用范围：本仓库 GitHub Actions 构建的 Windows x64 安装程序、macOS Intel / Apple Silicon 的 DMG 和 ZIP。**遇到 macOS“文件已损坏”请先看第 1 节。** 处理前不要删除已有任务数据。
+> 适用范围：本仓库 GitHub Actions 构建的 Windows x64 安装程序、macOS Intel / Apple Silicon 的独立 DMG。**遇到 macOS“文件已损坏”请先看第 1 节。** 处理前不要删除已有任务数据。
 
 ## 先确认你下载了什么
 
-1. 到 [Desktop builds 构建记录](https://github.com/Adamisatree/Todo/actions/workflows/build.yml)选择**最新且显示绿色成功**的一次运行，在页面底部下载 `Linea-macOS` 或 `Linea-Windows`。不要从不明站点下载，也不要使用失败运行的残留文件。
-2. GitHub Actions 下载的是一层**构建产物 ZIP**。解压它之后，macOS 会看到两个芯片架构各自的 DMG/ZIP，以及 `SHA256SUMS.txt`；Windows 会看到 EXE 和校验文件。
-3. macOS 点左上角苹果菜单 → **关于本机**查看芯片。M1/M2/M3/M4 等选择文件名含 `mac-arm64` 的版本；Intel 选择 `mac-x64`。也可在“终端”输入 `uname -m`：`arm64` 对应 Apple Silicon，`x86_64` 对应 Intel。
-4. macOS 使用 DMG：打开 DMG，把 `Linea Tasks.app` 拖到“应用程序”，**退出 / 弹出 DMG 后**从“应用程序”打开。使用 ZIP：用系统“归档实用工具”解压内层 ZIP，把 `.app` 拖到“应用程序”；不要直接从压缩包或 DMG 内运行。升级时先完全退出旧应用再替换。
+1. 到 [GitHub Releases 下载页](https://github.com/Adamisatree/Todo/releases/latest)的 **Assets** 中，只点击适合自己电脑的**一个文件**。不要从 Actions 页面下载包含多种安装包的 ZIP，也不要从不明网站下载。
+2. macOS 点左上角苹果菜单 → **关于本机**查看芯片。M1/M2/M3/M4 等选择文件名含 `mac-arm64.dmg` 的版本；Intel 选择 `mac-x64.dmg`。也可在“终端”输入 `uname -m`：`arm64` 对应 Apple Silicon，`x86_64` 对应 Intel。Windows x64 下载 `win-x64-setup.exe`。
+3. macOS 打开 DMG，把 `Linea Tasks.app` 拖到“应用程序”，**弹出 DMG 后**从“应用程序”打开；不要直接从 DMG 运行。升级时先完全退出旧应用再替换。
 
 ### 如何校验下载文件
 
-从同一次构建的产物中取 `SHA256SUMS.txt`，它列出内层 DMG/ZIP（或 EXE）的 SHA-256。校验前确保文件和校验文件在同一文件夹。macOS 在该文件夹中运行：
+Release 页面的说明列出每个 DMG / EXE 对应的 SHA-256。下载后在 macOS 终端运行：
 
 ```bash
-shasum -a 256 "Linea-Tasks-1.1.0-mac-arm64.dmg"
-cat SHA256SUMS.txt
+shasum -a 256 "Linea-Tasks-1.1.1-mac-arm64.dmg"
 ```
 
-文件名中的版本和架构以实际下载为准；**比较两行最左侧的 64 位十六进制摘要是否完全相同**。Windows 可在 PowerShell 运行 `Get-FileHash '.\Linea-Tasks-1.1.0-win-x64-setup.exe' -Algorithm SHA256`，再与同包内的 `SHA256SUMS.txt` 对照。旧构建可能还没有校验文件：建议改用提供校验文件的最新成功构建。如果摘要不同，请删除下载文件并重新下载，**不要尝试绕过系统安全检查**。
+文件名中的版本和架构以实际下载为准；**比较输出最左侧的 64 位十六进制摘要与 Release 页上该文件的摘要是否完全相同**。Windows 可在 PowerShell 运行 `Get-FileHash '.\Linea-Tasks-1.1.1-win-x64-setup.exe' -Algorithm SHA256`，再与 Release 页上的摘要对照。如果摘要不同，请删除下载文件并重新下载，**不要尝试绕过系统安全检查**。
 
 > 校验值只说明文件与该次 CI 生成的文件一致，并不能代替开发者签名、公证或对来源的判断。
 
@@ -26,7 +24,7 @@ cat SHA256SUMS.txt
 
 这句话**不总是表示文件内容真的坏了**。未经 Apple Developer ID 签名与公证的应用，在带有互联网下载隔离标记（quarantine）时，某些 macOS 版本会这样提示。当前项目采用临时的 **ad-hoc 代码签名**，不是 Apple 开发者签名，也没有公证；因此即使 CI 打包成功，系统仍可能拦截。请按顺序处理：
 
-1. **先不要点“移到废纸篓”**。按照上面的步骤确认下载来源、芯片架构、完整解压、安装位置和 SHA-256。若实际出现“包含恶意软件”或杀毒软件明确报告威胁，请停止，不要执行下面的隔离标记操作。
+1. **先不要点“移到废纸篓”**。按照上面的步骤确认下载来源、芯片架构、完整复制到应用程序、安装位置和 SHA-256。若实际出现“包含恶意软件”或杀毒软件明确报告威胁，请停止，不要执行下面的隔离标记操作。
 2. 可以先在 Finder 的“应用程序”里右键（或按住 Control 点击）`Linea Tasks.app` → **打开**，按提示确认；也可以到 **系统设置 → 隐私与安全性** 查看是否出现“仍要打开”。注意：对于“已损坏”提示，此方式**未必可用**。
 3. 如果确认来自本仓库的可信构建、哈希一致，而且仍提示“已损坏”，先在终端查看该应用的下载隔离标记：
 
@@ -49,7 +47,7 @@ cat SHA256SUMS.txt
    codesign --verify --deep --strict --verbose=2 "/Applications/Linea Tasks.app"
    ```
 
-   如果出现 `code object is not signed at all`、`invalid signature`、`a sealed resource is missing or invalid` 等错误，请删除**应用程序副本**（不是任务数据），重新从最新成功构建下载并解压；若仍失败，按文末模板反馈。正常的最新构建在 CI 中会对 Intel 和 Apple Silicon 的 `.app` 执行同样的签名校验。`spctl -a -vv` 因**未公证**而显示 `rejected` 并不一定表示文件被篡改；请不要把它当成唯一判断依据。
+   如果出现 `code object is not signed at all`、`invalid signature`、`a sealed resource is missing or invalid` 等错误，请删除**应用程序副本**（不是任务数据），重新从最新 Release 下载并安装；若仍失败，按文末模板反馈。正常的最新构建在 CI 中会对 Intel 和 Apple Silicon 的 `.app` 执行同样的签名校验。`spctl -a -vv` 因**未公证**而显示 `rejected` 并不一定表示文件被篡改；请不要把它当成唯一判断依据。
 
 **长期解决办法**是使用有效的 Apple Developer ID 证书签名并完成 Apple 公证；这需要开发者账号和相应凭据。当前构建没有这些条件，ad-hoc 签名与移除隔离标记都不能代替公证。
 

@@ -20,15 +20,17 @@
 
 ## 获取桌面应用
 
-在仓库的 **Actions → Desktop builds** 中下载构建产物（推送到本会话分支或手动运行工作流时生成）：
+在 **[GitHub Releases 下载页](https://github.com/Adamisatree/Todo/releases/latest)** 的 **Assets** 中，只需点击对应设备的**一个文件**，不必进入 Actions 页面、也不必下载含多种芯片版本的 ZIP：
 
-| 系统 | 下载文件 | 说明 |
+| 系统 | 只下载这一项 | 说明 |
 |---|---|---|
-| Windows x64 | `Linea-Tasks-*-win-x64-setup.exe` | 双击运行安装程序，可选安装位置 |
-| macOS Intel | `Linea-Tasks-*-mac-x64.zip` 或 `.dmg` | ZIP 解压后得到 `.app`，DMG 中可拖入“应用程序” |
-| macOS Apple Silicon | `Linea-Tasks-*-mac-arm64.zip` 或 `.dmg` | 与上面相同，适用于 M 系列芯片 |
+| macOS Apple Silicon（M1 / M2 / M3 / M4 等） | `Linea-Tasks-*-mac-arm64.dmg` | 打开 DMG，把 `.app` 拖入“应用程序” |
+| macOS Intel | `Linea-Tasks-*-mac-x64.dmg` | 打开 DMG，把 `.app` 拖入“应用程序” |
+| Windows x64 | `Linea-Tasks-*-win-x64-setup.exe` | 双击运行安装程序 |
 
-macOS 构建使用 ad-hoc 代码签名，但**没有 Apple Developer ID 签名或公证**；Windows 也未使用代码签名证书。若 macOS 显示“文件已损坏”或 Windows 出现 SmartScreen，请先阅读 **[常见问题与故障排查](docs/FAQ.md)**，核实来源、架构与构建产物内的 `SHA256SUMS.txt` 后再处理。**运行应用不需要联网**。
+Release 页面说明包含这三个文件各自的 SHA-256 校验值。GitHub Actions 的产物 ZIP 仅供自动构建流程使用，**不是给用户下载的安装包入口**。
+
+macOS 构建使用 ad-hoc 代码签名，但**没有 Apple Developer ID 签名或公证**；Windows 也未使用代码签名证书。若 macOS 显示“文件已损坏”或 Windows 出现 SmartScreen，请先阅读 **[常见问题与故障排查](docs/FAQ.md)**，核实来源、架构与 Release 页面公布的 SHA-256 后再处理。**运行应用不需要联网**。
 
 > 此仓库的 CI 需要 GitHub Actions 正常运行；若未看到构建产物，可在对应系统上自行构建。macOS `.app` 必须在 macOS 上打包，Linux 开发环境不能直接生成最终 `.app`。
 
@@ -45,7 +47,7 @@ npm run desktop:dev   # Electron 桌面调试
 npm test              # 逻辑测试
 npm run build         # 类型检查 + 构建静态前端
 npm run package:win   # Windows 上打包 EXE
-npm run package:mac   # macOS 上打包 Intel + Apple Silicon 的 DMG/ZIP
+npm run package:mac   # macOS 上打包 Intel + Apple Silicon 的独立 DMG
 ```
 
 打包输出在 `release/`（已忽略，不会进入 Git）。应用资源全部随包提供，运行时不依赖 Vite 服务器或外部 API。
