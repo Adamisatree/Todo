@@ -4,6 +4,8 @@ const fs = require('node:fs/promises');
 
 let window;
 let writeQueue = Promise.resolve();
+let pendingWrites = 0;
+let quitAfterWrites = false;
 const dataPath = () => join(app.getPath('userData'), 'linea-data.json');
 
 function validData(value) {
@@ -53,7 +55,8 @@ app.whenReady().then(() => {
   ipcMain.handle('data:load', readData);
   ipcMain.handle('data:save', (_, value) => {
     // Catch on the queue so a failed write does not permanently block future writes.
-    writeQueue = writeQueue.catch(() => {}).then(() => saveData(value));
+    pendingWrites++;
+    writeQueue = writeQueue.catch(() => {}).then(() => saveData(value)).finally(() => { pendingWrites--; });
     return writeQueue;
   });
   ipcMain.handle('data:export', async (_, value) => {
@@ -75,5 +78,11 @@ app.whenReady().then(() => {
   });
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+});
+app.on('before-quit', event => {
+  if (pendingWrites && !quitAfterWrites) {
+    event.preventDefault();
+    writeQueue.finally(() => { quitAfterWrites = true; app.quit(); });
+  }
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
