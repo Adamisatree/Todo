@@ -9,8 +9,8 @@
     "desktop:dev": "concurrently -k \"vite --host 0.0.0.0\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "tsc -b && vite build",
     "test": "vitest run",
-    "package:win": "npm run build && electron-builder --win nsis --x64",
-    "package:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64"
+    "package:win": "npm run build && electron-builder --win nsis --x64 --publish never",
+    "package:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -62,7 +62,8 @@
         }
       ],
       "identity": null,
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "artifactName": "Linea-Tasks-${version}-mac-${arch}.${ext}"
     },
     "dmg": {
       "artifactName": "Linea-Tasks-${version}-mac-${arch}.${ext}"
