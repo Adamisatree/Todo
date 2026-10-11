@@ -61,9 +61,10 @@
           ]
         }
       ],
-      "identity": null,
+      "identity": "-",
       "icon": "assets/icon.png",
-      "artifactName": "Linea-Tasks-${version}-mac-${arch}.${ext}"
+      "artifactName": "Linea-Tasks-${version}-mac-${arch}.${ext}",
+      "hardenedRuntime": false
     },
     "dmg": {
       "artifactName": "Linea-Tasks-${version}-mac-${arch}.${ext}"
