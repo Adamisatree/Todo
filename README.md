@@ -26,9 +26,11 @@
 | macOS Intel | `Linea-Tasks-*-mac-x64.zip` 或 `.dmg` | ZIP 解压后得到 `.app`，DMG 中可拖入“应用程序” |
 | macOS Apple Silicon | `Linea-Tasks-*-mac-arm64.zip` 或 `.dmg` | 与上面相同，适用于 M 系列芯片 |
 
-这些构建尚未使用 Apple Developer ID / Windows 证书签名。macOS 首次打开时如被 Gatekeeper 阻止，可在“系统设置 → 隐私与安全性”中允许，或右键应用选择“打开”；Windows 可能出现 SmartScreen 提示。**不需要联网使用应用**，安装包只用于本机运行。
+macOS 构建使用 ad-hoc 代码签名，但**没有 Apple Developer ID 签名或公证**；Windows 也未使用代码签名证书。若 macOS 显示“文件已损坏”或 Windows 出现 SmartScreen，请先阅读 **[常见问题与故障排查](docs/FAQ.md)**，核实来源、架构与构建产物内的 `SHA256SUMS.txt` 后再处理。**运行应用不需要联网**。
 
 > 此仓库的 CI 需要 GitHub Actions 正常运行；若未看到构建产物，可在对应系统上自行构建。macOS `.app` 必须在 macOS 上打包，Linux 开发环境不能直接生成最终 `.app`。
+
+> **macOS“文件已损坏”？** 不要直接关闭系统安全防护。按 [FAQ 第 1 节](docs/FAQ.md#1-macos-弹出linea-tasksapp已损坏无法打开你应该将它移到废纸篓) 的顺序排查；该文档也涵盖签名校验、Windows 安装和数据恢复。
 
 ## 本地开发与打包
 
